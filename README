@@ -1,0 +1,57 @@
+Server Bedelia
+
+Integrante:
+- Natasha Szmagalski Koroll
+
+URLS:
+- Busqueda estudiante por parametros: http://localhost:3010/v1/api/estudiantes/buscar?paramsBusqueda=franchesca
+- Estadisticas: http://localhost:3010/v1/api/estadistica?idMateria=1&idCarrera=2&nacionalidad=0 
+
+Configuración del puerto:
+PORT = 3010
+
+Para las estadisticas: 
+
+DELIMITER $$
+--
+-- Procedimientos
+--
+CREATE DEFINER=`root`@`localhost` PROCEDURE `procEstadistica` (IN `idMateriaParam` INT, IN `idCarreraParam` INT, IN `nacionalidadParam` INT)   BEGIN
+    DECLARE nombreMateria VARCHAR(50);
+    DECLARE nombreCarrera VARCHAR(50);
+    DECLARE nombreNacionalidad VARCHAR(50);
+    DECLARE cantEstudiantesMateria INT;
+    DECLARE cantEstudiantesCarrera INT;
+    DECLARE cantEstudiantesActivos INT;
+    DECLARE cantCarrerasVigentes INT;
+    DECLARE cantEstudiantesNacionalidad INT;
+
+    SELECT nombre INTO nombreMateria FROM materia WHERE idMateria = idMateriaParam;
+    SELECT nombre INTO nombreCarrera FROM carrera WHERE idCarrera = idCarreraParam;
+    SET nombreNacionalidad = (
+        CASE
+            WHEN nacionalidadParam = 0 THEN 'Argentinos'
+            WHEN nacionalidadParam = 1 THEN 'Uruguayos'
+            WHEN nacionalidadParam = 2 THEN 'Chilenos'
+            WHEN nacionalidadParam = 3 THEN 'Paraguayos'
+            WHEN nacionalidadParam = 4 THEN 'Brasileros'
+            WHEN nacionalidadParam = 5 THEN 'Bolivianos'
+            ELSE ''
+        END
+    );
+
+    SELECT COUNT(*) INTO cantEstudiantesMateria FROM estudiantemateria WHERE materia = idMateriaParam;
+    SELECT COUNT(*) INTO cantEstudiantesCarrera FROM estudiantecarrera WHERE carrera = idCarreraParam;
+    SELECT COUNT(*) INTO cantEstudiantesActivos FROM estudiante WHERE activo = 1;
+    SELECT COUNT(*) INTO cantCarrerasVigentes FROM carrera WHERE activo = 1;
+    SELECT COUNT(*) INTO cantEstudiantesNacionalidad FROM estudiante WHERE activo = 1 AND nacionalidad = nacionalidadParam;
+
+    SELECT 
+        CONCAT('Promedio de estudiantes inscriptos en materia ', idMateriaParam, ' (', nombreMateria, '): ', cantEstudiantesMateria) AS estadistica1,
+        CONCAT('Promedio de estudiantes inscriptos en carrera ', idCarreraParam, ' (', nombreCarrera, '): ', cantEstudiantesCarrera) AS estadistica2,
+        CONCAT('Promedio de estudiantes activos: ', cantEstudiantesActivos) AS estadistica3,
+        CONCAT('Promedio de carreras vigentes: ', cantCarrerasVigentes) AS estadistica4,
+        CONCAT('Promedio de estudiantes con nacionalidad ', nacionalidadParam, ' (', nombreNacionalidad, '): ', cantEstudiantesNacionalidad) AS estadistica5;
+END$$
+
+DELIMITER ;
